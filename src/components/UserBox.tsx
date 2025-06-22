@@ -15,6 +15,7 @@ interface IUserFollowings {
 interface UserBoxProps {
   avatar: string;
   username: string;
+  fullname: string;
 
   dataUserTotalPosts?: IUserTotalPostsData;
   loadingTotalPosts: boolean;
@@ -29,7 +30,6 @@ interface UserBoxProps {
   errorGetFollowings?: ApolloError;
 }
 
-// Componente auxiliar para exibir estados de loading, error ou dados
 const StatDisplay = ({
   loading,
   error,
@@ -72,6 +72,7 @@ const StatDisplay = ({
 export function UserBox({
   avatar,
   username,
+  fullname,
   dataUserTotalPosts,
   loadingTotalPosts,
   errorTotalPosts,
@@ -82,10 +83,8 @@ export function UserBox({
   loadingGetFollowings,
   errorGetFollowings,
 }: UserBoxProps) {
-  // Verifica se há algum erro crítico
   const hasErrors = errorTotalPosts || errorGetFollowers || errorGetFollowings;
 
-  // Verifica se ainda está carregando dados essenciais
   const isLoading =
     loadingTotalPosts || loadingGetFollowers || loadingGetFollowings;
 
@@ -96,14 +95,16 @@ export function UserBox({
           {avatar}
         </div>
         <div>
-          <h3 className="text-white font-semibold">{username}</h3>
+          <h3 className="text-white font-semibold">{fullname}</h3>
+          <p className="text-indigo-400 font-medium text-sm tracking-tight">
+            @{username}
+          </p>
           {isLoading && (
             <p className="text-gray-400 text-xs">Carregando dados...</p>
           )}
         </div>
       </div>
 
-      {/* Exibe mensagem de erro geral se houver problemas */}
       {hasErrors && (
         <div className="bg-red-900/20 border border-red-800 rounded-lg p-3 mb-4">
           <p className="text-red-400 text-sm font-medium">

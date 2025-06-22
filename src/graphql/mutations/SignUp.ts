@@ -6,6 +6,7 @@ export const SIGN_UP = gql`
     $password: String!
     $passwordConfirmation: String!
     $username: String!
+    $fullname: String!
   ) {
     signUp(
       input: {
@@ -13,12 +14,11 @@ export const SIGN_UP = gql`
         password: $password
         passwordConfirmation: $passwordConfirmation
         username: $username
+        fullname: $fullname
       }
     ) {
       result {
         id
-        email
-        username
       }
     }
   }

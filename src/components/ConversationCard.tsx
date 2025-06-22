@@ -11,7 +11,6 @@ interface ConversationCardData {
   tags: string[];
   replies: number;
   likes: number;
-  views: number;
 }
 
 export function CoversationCard({
@@ -25,7 +24,6 @@ export function CoversationCard({
   tags,
   replies,
   likes,
-  views,
 }: ConversationCardData) {
   return (
     <div
@@ -80,10 +78,6 @@ export function CoversationCard({
             <Heart className="w-5 h-5" />
             <span className="text-sm">{likes}</span>
           </button>
-        </div>
-        <div className="flex items-center space-x-2 text-gray-500 text-sm">
-          <Eye className="w-4 h-4" />
-          <span>{views}</span>
         </div>
       </div>
     </div>

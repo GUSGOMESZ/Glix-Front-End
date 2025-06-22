@@ -29,10 +29,12 @@ export function Home() {
 
   const userNavbarData = useMemo(() => {
     const username = localStorage.getItem("userName") || "User";
-    const avatar = username.slice(0, 2).toUpperCase();
+    const fullname = localStorage.getItem("fullname") || "00";
+    const avatar = fullname.slice(0, 2).toUpperCase();
 
     return {
       avatar,
+      fullname,
       username,
     };
   }, []);
@@ -66,8 +68,6 @@ export function Home() {
     variables: { userId: localStorage.getItem("userId") },
   });
 
-  // console.log(data_user_total_posts);
-
   const {
     data: data_get_followers,
     loading: loading_get_followers,
@@ -77,8 +77,6 @@ export function Home() {
     variables: { userId: localStorage.getItem("userId") },
   });
 
-  // console.log(data_get_followers);
-
   const {
     data: data_get_followings,
     loading: loading_get_followings,
@@ -87,8 +85,6 @@ export function Home() {
   } = useQuery(GET_FOLLOWINGS, {
     variables: { userId: localStorage.getItem("userId") },
   });
-
-  // console.log(data_get_followings);
 
   const [createPost] = useMutation(CREATE_POST);
 
@@ -106,10 +102,7 @@ export function Home() {
       tags: ["React", "JWT", "Autenticação"],
       replies: 12,
       likes: 28,
-      views: 156,
       timeAgo: "2h",
-      isHot: true,
-      isPinned: false,
     },
     {
       id: 2,
@@ -124,10 +117,7 @@ export function Home() {
       tags: ["PostgreSQL", "Performance", "Database"],
       replies: 8,
       likes: 15,
-      views: 89,
       timeAgo: "4h",
-      isHot: false,
-      isPinned: true,
     },
     {
       id: 3,
@@ -142,10 +132,7 @@ export function Home() {
       tags: ["CSS", "Grid", "Flexbox", "Frontend"],
       replies: 20,
       likes: 45,
-      views: 234,
       timeAgo: "6h",
-      isHot: true,
-      isPinned: false,
     },
     {
       id: 4,
@@ -160,10 +147,7 @@ export function Home() {
       tags: ["DevOps", "GitHub Actions", "CI/CD"],
       replies: 6,
       likes: 22,
-      views: 112,
       timeAgo: "8h",
-      isHot: false,
-      isPinned: false,
     },
     {
       id: 5,
@@ -178,10 +162,7 @@ export function Home() {
       tags: ["React Native", "Flutter", "Mobile"],
       replies: 35,
       likes: 78,
-      views: 423,
       timeAgo: "12h",
-      isHot: true,
-      isPinned: false,
     },
   ];
 
@@ -243,10 +224,6 @@ export function Home() {
     setNewPostTitle("");
   };
 
-  // console.log(data_list_posts?.listPosts?.results);
-  // console.log(data_list_tags?.listTags?.results);
-  // console.log(selectedTags);
-
   return (
     <div className="min-h-screen bg-gray-950">
       <Navbar
@@ -261,6 +238,7 @@ export function Home() {
             <UserBox
               avatar={userNavbarData.avatar}
               username={userNavbarData.username}
+              fullname={userNavbarData.fullname}
               dataUserTotalPosts={data_user_total_posts}
               loadingTotalPosts={loading_user_total_posts}
               errorTotalPosts={error_user_total_posts}
@@ -293,7 +271,6 @@ export function Home() {
                   tags={conversation.tags}
                   replies={conversation.replies}
                   likes={conversation.likes}
-                  views={conversation.likes}
                 />
               ))}
             </div>

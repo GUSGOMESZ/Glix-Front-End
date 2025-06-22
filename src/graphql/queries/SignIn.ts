@@ -7,6 +7,7 @@ export const SIGN_IN = gql`
       id
       token
       username
+      fullname
     }
   }
 `;

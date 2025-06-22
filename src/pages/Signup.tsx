@@ -11,6 +11,7 @@ export function Signup() {
   const [formData, setFormData] = useState({
     name: "",
     username: "",
+    fullname: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -33,6 +34,7 @@ export function Signup() {
       const { data } = await signUp({
         variables: {
           username: formData.username,
+          fullname: formData.fullname,
           email: formData.email,
           password: formData.password,
           passwordConfirmation: formData.confirmPassword,
@@ -71,6 +73,25 @@ export function Signup() {
                   <Code2 className="w-6 h-6 text-white" />
                 </div>
                 <h1 className="text-2xl font-bold text-white">Glix</h1>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Nome Completo
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={formData.fullname}
+                  onChange={(e) =>
+                    handleInputChange("fullname", e.target.value)
+                  }
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                  placeholder="Nome e Sobrenome"
+                  required
+                />
+                <div className="pl-6"></div>
               </div>
             </div>
 

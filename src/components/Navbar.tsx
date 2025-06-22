@@ -17,6 +17,7 @@ export function Navbar({ setShowNewPostModal, avatar, username }: NavbarProps) {
     localStorage.removeItem("userEmail");
     localStorage.removeItem("userId");
     localStorage.removeItem("userName");
+    localStorage.removeItem("fullname");
 
     navigate("/signin");
   }

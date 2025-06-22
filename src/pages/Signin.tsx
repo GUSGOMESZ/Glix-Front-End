@@ -24,6 +24,7 @@ export function Signin() {
         localStorage.setItem("userEmail", data.signIn.email);
         localStorage.setItem("userId", data.signIn.id);
         localStorage.setItem("userName", data.signIn.username);
+        localStorage.setItem("fullname", data.signIn.fullname);
 
         navigate("/home");
       } else {
