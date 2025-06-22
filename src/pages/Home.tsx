@@ -1,24 +1,20 @@
-import React, { useState } from "react";
-import {
-  Code2,
-  Search,
-  User,
-  MessageCircle,
-  Heart,
-  Share2,
-  MoreHorizontal,
-  TrendingUp,
-  Settings,
-  LogOut,
-  Plus,
-  Eye,
-} from "lucide-react";
+import React, { useState, useMemo } from "react";
+import { Search } from "lucide-react";
 import { useMutation, useQuery } from "@apollo/client";
+import { CoversationCard } from "../components/ConversationCard";
 import toast from "react-hot-toast";
 
 import { CREATE_POST } from "../graphql/mutations/CreatePost";
 import { LIST_POSTS } from "../graphql/queries/ListPosts";
 import { LIST_TAGS } from "../graphql/queries/ListTags";
+import { GET_USER_TOTAL_POSTS } from "../graphql/queries/GetUserTotalPosts";
+import { GET_TRENDINGS } from "../graphql/queries/GetTrendings";
+import { GET_FOLLOWERS } from "../graphql/queries/GetFollowers";
+
+import { Navbar } from "../components/Navbar";
+import { TrendingBox } from "../components/TrendingBox";
+import { UserBox } from "../components/UserBox";
+import { GET_FOLLOWINGS } from "../graphql/queries/GetFollowings";
 
 interface Tag {
   id: string;
@@ -26,12 +22,20 @@ interface Tag {
 }
 
 export function Home() {
-  const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNewPostModal, setShowNewPostModal] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostTitle, setNewPostTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [listTags, setListTags] = useState({});
+
+  const userNavbarData = useMemo(() => {
+    const username = localStorage.getItem("userName") || "User";
+    const avatar = username.slice(0, 2).toUpperCase();
+
+    return {
+      avatar,
+      username,
+    };
+  }, []);
 
   const {
     data: data_list_posts,
@@ -45,6 +49,46 @@ export function Home() {
     loading: loading_list_tags,
     error: error_list_tags,
   } = useQuery(LIST_TAGS);
+
+  const {
+    data: data_trending,
+    loading: loading_trending,
+    error: error_trending,
+    refetch: refetch_trendings,
+  } = useQuery(GET_TRENDINGS);
+
+  const {
+    data: data_user_total_posts,
+    loading: loading_user_total_posts,
+    error: error_user_total_posts,
+    refetch: refetch_user_total_posts,
+  } = useQuery(GET_USER_TOTAL_POSTS, {
+    variables: { userId: localStorage.getItem("userId") },
+  });
+
+  // console.log(data_user_total_posts);
+
+  const {
+    data: data_get_followers,
+    loading: loading_get_followers,
+    error: error_get_followers,
+    refetch: _refetch_get_followers,
+  } = useQuery(GET_FOLLOWERS, {
+    variables: { userId: localStorage.getItem("userId") },
+  });
+
+  // console.log(data_get_followers);
+
+  const {
+    data: data_get_followings,
+    loading: loading_get_followings,
+    error: error_get_followings,
+    refetch: _refetch_get_followings,
+  } = useQuery(GET_FOLLOWINGS, {
+    variables: { userId: localStorage.getItem("userId") },
+  });
+
+  // console.log(data_get_followings);
 
   const [createPost] = useMutation(CREATE_POST);
 
@@ -141,36 +185,9 @@ export function Home() {
     },
   ];
 
-  const trendingTopics = [
-    { name: "React", posts: 342 },
-    { name: "TypeScript", posts: 298 },
-    { name: "Node.js", posts: 256 },
-    { name: "Python", posts: 234 },
-    { name: "Next.js", posts: 189 },
-  ];
-
-  const availableTags = [
-    "React",
-    "TypeScript",
-    "Node.js",
-    "Python",
-    "JavaScript",
-    "CSS",
-    "HTML",
-    "Vue",
-    "Angular",
-    "Database",
-    "API",
-    "Frontend",
-    "Backend",
-    "DevOps",
-    "Mobile",
-    "Flutter",
-    "React Native",
-  ];
-
   const handleNewPost = async (e: React.FormEvent) => {
-    if (!newPostTitle.trim() || !newPostContent.trim()) return;
+    if (!newPostTitle.trim() || !newPostContent.trim() || !selectedTags.length)
+      return;
 
     e.preventDefault();
 
@@ -193,6 +210,8 @@ export function Home() {
       });
 
       refetch_list_posts();
+      refetch_trendings();
+      refetch_user_total_posts();
 
       toast.success("Conversa criada com sucesso.");
     } catch (error) {
@@ -217,228 +236,65 @@ export function Home() {
     });
   };
 
+  const handleCloseNewPostModal = () => {
+    setShowNewPostModal(false);
+    setSelectedTags([]);
+    setNewPostContent("");
+    setNewPostTitle("");
+  };
+
   // console.log(data_list_posts?.listPosts?.results);
   // console.log(data_list_tags?.listTags?.results);
   // console.log(selectedTags);
 
   return (
     <div className="min-h-screen bg-gray-950">
-      <header className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="bg-indigo-700 p-2 rounded-lg shadow-lg">
-                <Code2 className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-indigo-400">Glix</h1>
-            </div>
-
-            <div className="flex-1 max-w-xl mx-8 hidden md:block">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar discussões, tecnologias..."
-                  className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => setShowNewPostModal(true)}
-                className="bg-indigo-700 hover:bg-indigo-800 text-white px-4 py-2 rounded-lg font-medium transition-all flex items-center space-x-2 shadow-lg"
-              >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:block">Nova Conversa</span>
-              </button>
-
-              <div className="relative">
-                <button
-                  onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  <div className="w-8 h-8 bg-indigo-700 rounded-lg flex items-center justify-center text-white font-medium">
-                    JD
-                  </div>
-                  <span className="text-white font-medium hidden sm:block">
-                    João Dev
-                  </span>
-                </button>
-
-                {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
-                    <div className="p-4 border-b border-gray-700">
-                      <p className="text-white font-medium">João Dev</p>
-                      <p className="text-gray-400 text-sm">@joao_dev</p>
-                    </div>
-                    <div className="py-2">
-                      <a
-                        href="#"
-                        className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                      >
-                        <User className="w-4 h-4" />
-                        <span>Perfil</span>
-                      </a>
-                      <a
-                        href="#"
-                        className="flex items-center space-x-2 px-4 py-2 text-gray-300 hover:bg-gray-700 hover:text-white transition-colors"
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>Configurações</span>
-                      </a>
-                      <hr className="border-gray-700 my-2" />
-                      <a
-                        href="#"
-                        className="flex items-center space-x-2 px-4 py-2 text-red-400 hover:bg-gray-700 hover:text-red-300 transition-colors"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        <span>Sair</span>
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar
+        setShowNewPostModal={setShowNewPostModal}
+        avatar={userNavbarData.avatar}
+        username={userNavbarData.username}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1 order-2 lg:order-1">
-            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 mb-6 hover:bg-gray-900/70 transition-all">
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-12 h-12 bg-indigo-700 rounded-xl flex items-center justify-center text-white font-bold text-lg">
-                  JD
-                </div>
-                <div>
-                  <h3 className="text-white font-semibold">João Dev</h3>
-                  <p className="text-gray-400 text-sm">@joao_dev</p>
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-center mb-4">
-                <div>
-                  <p className="text-white font-semibold">142</p>
-                  <p className="text-gray-400 text-xs">Posts</p>
-                </div>
-                <div>
-                  <p className="text-white font-semibold">1.2k</p>
-                  <p className="text-gray-400 text-xs">Seguidores</p>
-                </div>
-                <div>
-                  <p className="text-white font-semibold">284</p>
-                  <p className="text-gray-400 text-xs">Seguindo</p>
-                </div>
-              </div>
-              <button className="w-full bg-indigo-700 hover:bg-indigo-800 text-white py-2 px-4 rounded-lg transition-all font-medium">
-                Ver Perfil
-              </button>
-            </div>
+            <UserBox
+              avatar={userNavbarData.avatar}
+              username={userNavbarData.username}
+              dataUserTotalPosts={data_user_total_posts}
+              loadingTotalPosts={loading_user_total_posts}
+              errorTotalPosts={error_user_total_posts}
+              dataGetFollowers={data_get_followers}
+              loadingGetFollowers={loading_get_followers}
+              errorGetFollowers={error_get_followers}
+              dataGetFollowings={data_get_followings}
+              loadingGetFollowings={loading_get_followings}
+              errorGetFollowings={error_get_followings}
+            />
 
-            <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6">
-              <div className="flex items-center space-x-2 mb-4">
-                <TrendingUp className="w-5 h-5 text-orange-400" />
-                <h3 className="text-white font-semibold">Trending</h3>
-              </div>
-              <div className="space-y-3">
-                {trendingTopics.map((topic, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between group cursor-pointer"
-                  >
-                    <span className="text-gray-300 group-hover:text-indigo-400 transition-colors">
-                      #{topic.name}
-                    </span>
-                    <span className="text-gray-500 text-sm">{topic.posts}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <TrendingBox
+              data_trending={data_trending}
+              loading_trending={loading_trending}
+              error_trending={error_trending}
+            />
           </div>
 
           <div className="lg:col-span-3 order-1 lg:order-2">
             <div className="space-y-4">
               {conversations.map((conversation) => (
-                <div
-                  key={conversation.id}
-                  className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 hover:bg-gray-900/70 hover:border-gray-700 transition-all cursor-pointer group"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 bg-indigo-700 rounded-lg flex items-center justify-center text-white font-medium">
-                        {conversation.author.avatar}
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <h4 className="text-white font-medium group-hover:text-indigo-400 transition-colors">
-                            {conversation.author.name}
-                          </h4>
-                          <span className="text-gray-400 text-sm">
-                            @{conversation.author.username}
-                          </span>
-                          <span className="text-gray-500 text-sm">•</span>
-                          <span className="text-gray-500 text-sm">
-                            {conversation.timeAgo}
-                          </span>
-                          {conversation.isPinned && (
-                            <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full border border-blue-500/20">
-                              Fixado
-                            </span>
-                          )}
-                          {conversation.isHot && (
-                            <span className="bg-orange-500/20 text-orange-400 text-xs px-2 py-0.5 rounded-full border border-orange-500/20 animate-pulse">
-                              Hot
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <button className="text-gray-400 hover:text-white transition-colors opacity-0 group-hover:opacity-100">
-                      <MoreHorizontal className="w-5 h-5" />
-                    </button>
-                  </div>
-
-                  <h2 className="text-white text-lg font-semibold mb-2 group-hover:text-indigo-400 transition-colors">
-                    {conversation.title}
-                  </h2>
-
-                  <p className="text-gray-300 mb-4 line-clamp-2">
-                    {conversation.excerpt}
-                  </p>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {conversation.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="bg-gray-800/50 text-indigo-400 text-sm px-3 py-1 rounded-full hover:bg-indigo-500/20 cursor-pointer transition-all border border-gray-700 hover:border-indigo-500/30"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-6">
-                      <button className="flex items-center space-x-2 text-gray-400 hover:text-indigo-400 transition-colors">
-                        <MessageCircle className="w-5 h-5" />
-                        <span className="text-sm">{conversation.replies}</span>
-                      </button>
-                      <button className="flex items-center space-x-2 text-gray-400 hover:text-red-400 transition-colors">
-                        <Heart className="w-5 h-5" />
-                        <span className="text-sm">{conversation.likes}</span>
-                      </button>
-                      <button className="flex items-center space-x-2 text-gray-400 hover:text-green-400 transition-colors">
-                        <Share2 className="w-5 h-5" />
-                        <span className="text-sm">Compartilhar</span>
-                      </button>
-                    </div>
-                    <div className="flex items-center space-x-2 text-gray-500 text-sm">
-                      <Eye className="w-4 h-4" />
-                      <span>{conversation.views}</span>
-                    </div>
-                  </div>
-                </div>
+                <CoversationCard
+                  id={conversation.id}
+                  avatar={conversation.author.avatar}
+                  name={conversation.author.name}
+                  username={conversation.author.username}
+                  timeago={conversation.timeAgo}
+                  title={conversation.title}
+                  excerpt={conversation.excerpt}
+                  tags={conversation.tags}
+                  replies={conversation.replies}
+                  likes={conversation.likes}
+                  views={conversation.likes}
+                />
               ))}
             </div>
           </div>
@@ -454,10 +310,7 @@ export function Home() {
                   Nova Conversa
                 </h2>
                 <button
-                  onClick={() => {
-                    setShowNewPostModal(false);
-                    setSelectedTags([]);
-                  }}
+                  onClick={handleCloseNewPostModal}
                   className="text-gray-400 hover:text-white transition-colors duration-200"
                   aria-label="Fechar"
                 >
@@ -514,64 +367,109 @@ export function Home() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Tags (selecione até 3)
+                  Tags (no mínimo 1 e no máximo 3)
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {data_list_tags?.listTags?.results?.map((tag: Tag) => (
-                    <button
-                      key={tag.id}
-                      onClick={() => handleTagToggle(tag.description)}
-                      className={`
-                  px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-75
-                  ${
-                    selectedTags.includes(tag.description)
-                      ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
-                      : "bg-gray-800 text-gray-400 border border-gray-700"
-                  }
-                  ${
-                    selectedTags.length >= 3 &&
-                    !selectedTags.includes(tag.description)
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-gray-700 hover:text-white cursor-pointer"
-                  }
-                `}
-                      disabled={
-                        selectedTags.length >= 3 &&
-                        !selectedTags.includes(tag.description)
-                      }
-                      aria-pressed={selectedTags.includes(tag.description)}
-                    >
-                      {tag.description}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <p className="text-xs text-gray-500">
-                    {selectedTags.length}/3 tags selecionadas
-                  </p>
-                  {selectedTags.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTags([])}
-                      className="text-xs text-red-400 hover:text-red-300 transition-colors duration-150"
-                    >
-                      Limpar seleção
-                    </button>
-                  )}
-                </div>
+
+                {loading_list_tags && (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="flex items-center space-x-2">
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-500"></div>
+                      <span className="text-gray-400 text-sm">
+                        Carregando tags...
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {error_list_tags && (
+                  <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
+                    <div className="flex items-center space-x-2">
+                      <svg
+                        className="h-5 w-5 text-red-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span className="text-red-400 text-sm">
+                        Erro ao carregar tags. Tente novamente.
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {!loading_list_tags && !error_list_tags && (
+                  <div className="flex flex-wrap gap-2">
+                    {data_list_tags?.listTags?.results?.map((tag: Tag) => (
+                      <button
+                        key={tag.id}
+                        onClick={() => handleTagToggle(tag.description)}
+                        className={`
+                    px-3 py-1.5 rounded-full text-sm font-medium transition-colors duration-75
+                    ${
+                      selectedTags.includes(tag.description)
+                        ? "bg-indigo-500/20 text-indigo-400 border border-indigo-500/30"
+                        : "bg-gray-800 text-gray-400 border border-gray-700"
+                    }
+                    ${
+                      selectedTags.length >= 3 &&
+                      !selectedTags.includes(tag.description)
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-gray-700 hover:text-white cursor-pointer"
+                    }
+                  `}
+                        disabled={
+                          selectedTags.length >= 3 &&
+                          !selectedTags.includes(tag.description)
+                        }
+                        aria-pressed={selectedTags.includes(tag.description)}
+                      >
+                        {tag.description}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {!loading_list_tags && !error_list_tags && (
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-xs text-gray-500">
+                      {selectedTags.length}/3 tags selecionadas
+                    </p>
+                    {selectedTags.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTags([])}
+                        className="text-xs text-red-400 hover:text-red-300 transition-colors duration-150"
+                      >
+                        Limpar seleção
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="p-6 border-t border-gray-800 flex items-center justify-between sticky bottom-0 bg-gray-900">
               <button
-                onClick={() => setShowNewPostModal(false)}
+                onClick={handleCloseNewPostModal}
                 className="px-5 py-2.5 text-gray-300 hover:text-white transition-colors duration-200 border border-gray-700 rounded-lg hover:bg-gray-800"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleNewPost}
-                disabled={!newPostTitle.trim() || !newPostContent.trim()}
+                disabled={
+                  !newPostTitle.trim() ||
+                  !newPostContent.trim() ||
+                  !selectedTags.length ||
+                  loading_list_tags
+                }
                 className="bg-indigo-700 hover:bg-indigo-800 disabled:bg-gray-700 text-white px-6 py-2.5 rounded-lg font-medium transition-all duration-200"
               >
                 Publicar Conversa

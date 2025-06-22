@@ -10,18 +10,20 @@ export function Signin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
-  const [isLoading, _setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const { setToken } = useToken();
 
   const [signIn] = useLazyQuery(SIGN_IN, {
     onCompleted: (data) => {
+      setIsLoading(false);
       if (data?.signIn?.token) {
         setToken(data.signIn.token);
+
         localStorage.setItem("userEmail", data.signIn.email);
         localStorage.setItem("userId", data.signIn.id);
-        localStorage.setItem("userName", data.signIn.name);
+        localStorage.setItem("userName", data.signIn.username);
 
         navigate("/home");
       } else {
@@ -29,6 +31,7 @@ export function Signin() {
       }
     },
     onError: () => {
+      setIsLoading(false);
       setErrorMessage("Credenciais inválidas...");
     },
   });
@@ -37,6 +40,8 @@ export function Signin() {
     e.preventDefault();
 
     setErrorMessage("");
+
+    setIsLoading(true);
 
     signIn({ variables: { email, password } });
   };
