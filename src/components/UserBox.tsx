@@ -1,15 +1,12 @@
-import type { ApolloError } from "@apollo/client";
+import { useQuery, type ApolloError } from "@apollo/client";
+import { GET_FOLLOWERS } from "../graphql/queries/GetFollowers";
+import { GET_FOLLOWINGS } from "../graphql/queries/GetFollowings";
+import { useNavigate } from "react-router-dom";
+import { useGetTotalFollowers } from "../hooks/useGetTotalFollowers";
+import { useGetTotalFollowing } from "../hooks/useGetTotalFollowing";
 
 interface IUserTotalPostsData {
   getUserTotalPosts?: number;
-}
-
-interface IUserFollowers {
-  getFollowers?: number;
-}
-
-interface IUserFollowings {
-  getFollowings?: number;
 }
 
 interface UserBoxProps {
@@ -20,14 +17,6 @@ interface UserBoxProps {
   dataUserTotalPosts?: IUserTotalPostsData;
   loadingTotalPosts: boolean;
   errorTotalPosts?: ApolloError;
-
-  dataGetFollowers?: IUserFollowers;
-  loadingGetFollowers: boolean;
-  errorGetFollowers?: ApolloError;
-
-  dataGetFollowings?: IUserFollowings;
-  loadingGetFollowings: boolean;
-  errorGetFollowings?: ApolloError;
 }
 
 const StatDisplay = ({
@@ -76,17 +65,20 @@ export function UserBox({
   dataUserTotalPosts,
   loadingTotalPosts,
   errorTotalPosts,
-  dataGetFollowers,
-  loadingGetFollowers,
-  errorGetFollowers,
-  dataGetFollowings,
-  loadingGetFollowings,
-  errorGetFollowings,
 }: UserBoxProps) {
-  const hasErrors = errorTotalPosts || errorGetFollowers || errorGetFollowings;
+  const navigate = useNavigate();
+
+  const { data_get_followers, loading_get_followers, error_get_followers } =
+    useGetTotalFollowers();
+
+  const { data_get_followings, loading_get_followings, error_get_followings } =
+    useGetTotalFollowing();
+
+  const hasErrors =
+    errorTotalPosts || error_get_followers || error_get_followings;
 
   const isLoading =
-    loadingTotalPosts || loadingGetFollowers || loadingGetFollowings;
+    loadingTotalPosts || loading_get_followers || loading_get_followings;
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl p-6 mb-6 hover:bg-gray-900/70 transition-all">
@@ -114,11 +106,13 @@ export function UserBox({
             {errorTotalPosts && (
               <p>• Erro ao carregar posts: {errorTotalPosts.message}</p>
             )}
-            {errorGetFollowers && (
-              <p>• Erro ao carregar seguidores: {errorGetFollowers.message}</p>
+            {error_get_followers && (
+              <p>
+                • Erro ao carregar seguidores: {error_get_followers.message}
+              </p>
             )}
-            {errorGetFollowings && (
-              <p>• Erro ao carregar seguindo: {errorGetFollowings.message}</p>
+            {error_get_followings && (
+              <p>• Erro ao carregar seguindo: {error_get_followings.message}</p>
             )}
           </div>
         </div>
@@ -132,15 +126,15 @@ export function UserBox({
           label="Posts"
         />
         <StatDisplay
-          loading={loadingGetFollowers}
-          error={errorGetFollowers}
-          value={dataGetFollowers?.getFollowers}
+          loading={loading_get_followers}
+          error={error_get_followers}
+          value={data_get_followers?.getFollowers}
           label="Seguidores"
         />
         <StatDisplay
-          loading={loadingGetFollowings}
-          error={errorGetFollowings}
-          value={dataGetFollowings?.getFollowings}
+          loading={loading_get_followings}
+          error={error_get_followings}
+          value={data_get_followings?.getFollowings}
           label="Seguindo"
         />
       </div>
@@ -152,6 +146,7 @@ export function UserBox({
             : "bg-indigo-700 hover:bg-indigo-800 text-white"
         }`}
         disabled={isLoading}
+        onClick={() => navigate(`/profile/${username}`)}
       >
         {isLoading ? "Carregando..." : "Ver Perfil"}
       </button>

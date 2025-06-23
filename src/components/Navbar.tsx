@@ -6,9 +6,15 @@ interface NavbarProps {
   setShowNewPostModal: (show: boolean) => void;
   avatar: string;
   username: string;
+  fullname: string;
 }
 
-export function Navbar({ setShowNewPostModal, avatar, username }: NavbarProps) {
+export function Navbar({
+  setShowNewPostModal,
+  avatar,
+  username,
+  fullname,
+}: NavbarProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
 
@@ -26,12 +32,19 @@ export function Navbar({ setShowNewPostModal, avatar, username }: NavbarProps) {
     <header className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-800 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-3">
-            <div className="bg-indigo-700 p-2 rounded-lg shadow-lg">
-              <Code2 className="w-6 h-6 text-white" />
+          <button
+            onClick={() => navigate("/home")}
+            className="transition-colors duration-200"
+          >
+            <div className="flex items-center space-x-3">
+              <div className="bg-indigo-700 hover:bg-indigo-600 p-2 rounded-lg shadow-lg transition-colors duration-200">
+                <Code2 className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-xl font-bold text-indigo-400 hover:text-indigo-300 transition-colors duration-200">
+                Glix
+              </h1>
             </div>
-            <h1 className="text-xl font-bold text-indigo-400">Glix</h1>
-          </div>
+          </button>
 
           <div className="flex-1 max-w-xl mx-8 hidden md:block">
             <div className="relative">
@@ -62,14 +75,19 @@ export function Navbar({ setShowNewPostModal, avatar, username }: NavbarProps) {
                   {avatar}
                 </div>
                 <span className="text-white font-medium hidden sm:block">
-                  {username}
+                  {fullname}
                 </span>
               </button>
 
               {showUserMenu && (
                 <div className="absolute right-0 mt-2 w-48 bg-gray-800 border border-gray-700 rounded-lg shadow-xl z-50">
                   <div className="p-4 border-b border-gray-700">
-                    <p className="text-white font-medium">{username}</p>
+                    <h3 className="text-gray-300 text-sm font-medium">
+                      {fullname}
+                    </h3>
+                    <p className="text-indigo-400 font-medium text-sm tracking-tight">
+                      @{username}
+                    </p>
                   </div>
                   <div className="py-2">
                     <a

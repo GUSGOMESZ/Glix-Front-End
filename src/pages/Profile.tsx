@@ -1,5 +1,14 @@
 import React, { useState, useMemo } from "react";
-import { Search } from "lucide-react";
+import {
+  Search,
+  Settings,
+  Calendar,
+  Edit3,
+  Users,
+  MessageSquare,
+  Heart,
+  Bookmark,
+} from "lucide-react";
 import { useMutation, useQuery } from "@apollo/client";
 import { CoversationCard } from "../components/ConversationCard";
 import toast from "react-hot-toast";
@@ -8,22 +17,65 @@ import { CREATE_POST } from "../graphql/mutations/CreatePost";
 import { LIST_POSTS } from "../graphql/queries/ListPosts";
 import { LIST_TAGS } from "../graphql/queries/ListTags";
 import { GET_USER_TOTAL_POSTS } from "../graphql/queries/GetUserTotalPosts";
+import { GET_TRENDINGS } from "../graphql/queries/GetTrendings";
 
 import { Navbar } from "../components/Navbar";
 import { TrendingBox } from "../components/TrendingBox";
-import { UserBox } from "../components/UserBox";
+import { useParams } from "react-router-dom";
+import { useGetTotalFollowers } from "../hooks/useGetTotalFollowers";
 import { useGetTrendings } from "../hooks/useGetTrendings";
+import { useGetTotalFollowing } from "../hooks/useGetTotalFollowing";
 
 interface Tag {
   id: string;
   description: string;
 }
 
-export function Home() {
+interface ProfileData {
+  id: string;
+  username: string;
+  fullname: string;
+  bio: string;
+  location: string;
+  website: string;
+  joinDate: string;
+  followers: number;
+  following: number;
+  avatar: string;
+}
+
+export function Profile() {
   const [showNewPostModal, setShowNewPostModal] = useState(false);
   const [newPostContent, setNewPostContent] = useState("");
   const [newPostTitle, setNewPostTitle] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showEditProfile, setShowEditProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState<"posts" | "likes" | "bookmarks">(
+    "posts"
+  );
+
+  const { username } = useParams();
+
+  console.log(username);
+
+  const profileData: ProfileData = useMemo(() => {
+    const username = localStorage.getItem("userName") || "User";
+    const fullname = localStorage.getItem("fullname") || "Usuário";
+    const avatar = fullname.slice(0, 2).toUpperCase();
+
+    return {
+      id: localStorage.getItem("userId") || "1",
+      username,
+      fullname,
+      bio: "Desenvolvedor Full Stack apaixonado por tecnologia e código limpo. Sempre em busca de novos desafios e aprendizado contínuo.",
+      location: "São Paulo, Brasil",
+      website: "https://github.com/usuario",
+      joinDate: "Janeiro 2023",
+      followers: 1247,
+      following: 532,
+      avatar,
+    };
+  }, []);
 
   const userNavbarData = useMemo(() => {
     const username = localStorage.getItem("userName") || "User";
@@ -53,6 +105,12 @@ export function Home() {
   const { data_trending, loading_trending, error_trending, refetch_trendings } =
     useGetTrendings();
 
+  const { data_get_followers, loading_get_followers, error_get_followers } =
+    useGetTotalFollowers();
+
+  const { data_get_followings, loading_get_followings, error_get_followings } =
+    useGetTotalFollowing();
+
   const {
     data: data_user_total_posts,
     loading: loading_user_total_posts,
@@ -64,13 +122,13 @@ export function Home() {
 
   const [createPost] = useMutation(CREATE_POST);
 
-  const conversations = [
+  const userPosts = [
     {
       id: 1,
       author: {
-        name: "Ana Silva",
-        username: "ana_dev",
-        avatar: "AS",
+        name: profileData.fullname,
+        username: profileData.username,
+        avatar: profileData.avatar,
       },
       title: "Como implementar autenticação JWT no React?",
       excerpt:
@@ -83,24 +141,9 @@ export function Home() {
     {
       id: 2,
       author: {
-        name: "Carlos Mendes",
-        username: "carlos_backend",
-        avatar: "CM",
-      },
-      title: "Otimização de queries no PostgreSQL",
-      excerpt:
-        "Pessoal, alguém tem dicas para otimizar queries complexas no PostgreSQL? Tenho uma consulta que está demorando muito...",
-      tags: ["PostgreSQL", "Performance", "Database"],
-      replies: 8,
-      likes: 15,
-      timeAgo: "4h",
-    },
-    {
-      id: 3,
-      author: {
-        name: "Mariana Costa",
-        username: "mari_frontend",
-        avatar: "MC",
+        name: profileData.fullname,
+        username: profileData.username,
+        avatar: profileData.avatar,
       },
       title: "Melhores práticas para CSS Grid vs Flexbox",
       excerpt:
@@ -109,36 +152,6 @@ export function Home() {
       replies: 20,
       likes: 45,
       timeAgo: "6h",
-    },
-    {
-      id: 4,
-      author: {
-        name: "Pedro Santos",
-        username: "pedro_devops",
-        avatar: "PS",
-      },
-      title: "Deploy automatizado com GitHub Actions",
-      excerpt:
-        "Configurei um pipeline de CI/CD com GitHub Actions para deploy automático. Vou compartilhar o que aprendi...",
-      tags: ["DevOps", "GitHub Actions", "CI/CD"],
-      replies: 6,
-      likes: 22,
-      timeAgo: "8h",
-    },
-    {
-      id: 5,
-      author: {
-        name: "Julia Oliveira",
-        username: "julia_mobile",
-        avatar: "JO",
-      },
-      title: "React Native vs Flutter em 2025",
-      excerpt:
-        "Análise comparativa entre React Native e Flutter baseada na minha experiência com ambos em projetos reais...",
-      tags: ["React Native", "Flutter", "Mobile"],
-      replies: 35,
-      likes: 78,
-      timeAgo: "12h",
     },
   ];
 
@@ -200,6 +213,57 @@ export function Home() {
     setNewPostTitle("");
   };
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "posts":
+        return (
+          <div className="space-y-4">
+            {userPosts.map((post) => (
+              <CoversationCard
+                key={post.id}
+                id={post.id}
+                avatar={post.author.avatar}
+                name={post.author.name}
+                username={post.author.username}
+                timeago={post.timeAgo}
+                title={post.title}
+                excerpt={post.excerpt}
+                tags={post.tags}
+                replies={post.replies}
+                likes={post.likes}
+              />
+            ))}
+          </div>
+        );
+      case "likes":
+        return (
+          <div className="text-center py-12">
+            <Heart className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-300 mb-2">
+              Nenhuma curtida ainda
+            </h3>
+            <p className="text-gray-500">
+              Os posts que você curtir aparecerão aqui.
+            </p>
+          </div>
+        );
+      case "bookmarks":
+        return (
+          <div className="text-center py-12">
+            <Bookmark className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-300 mb-2">
+              Nenhum item salvo
+            </h3>
+            <p className="text-gray-500">
+              Os posts que você salvar aparecerão aqui.
+            </p>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-950">
       <Navbar
@@ -212,15 +276,6 @@ export function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <div className="lg:col-span-1 order-2 lg:order-1">
-            <UserBox
-              avatar={userNavbarData.avatar}
-              username={userNavbarData.username}
-              fullname={userNavbarData.fullname}
-              dataUserTotalPosts={data_user_total_posts}
-              loadingTotalPosts={loading_user_total_posts}
-              errorTotalPosts={error_user_total_posts}
-            />
-
             <TrendingBox
               data_trending={data_trending}
               loading_trending={loading_trending}
@@ -228,24 +283,97 @@ export function Home() {
             />
           </div>
 
-          {/* Colocar secao do perfil aqui */}
           <div className="lg:col-span-3 order-1 lg:order-2">
-            <div className="space-y-4">
-              {conversations.map((conversation) => (
-                <CoversationCard
-                  id={conversation.id}
-                  avatar={conversation.author.avatar}
-                  name={conversation.author.name}
-                  username={conversation.author.username}
-                  timeago={conversation.timeAgo}
-                  title={conversation.title}
-                  excerpt={conversation.excerpt}
-                  tags={conversation.tags}
-                  replies={conversation.replies}
-                  likes={conversation.likes}
-                />
-              ))}
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-6">
+              <div className="h-32 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg mb-4"></div>
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-24 h-24 bg-indigo-600 rounded-full flex items-center justify-center text-white text-2xl font-bold -mt-8 border-4 border-gray-900">
+                    {profileData.avatar}
+                  </div>
+
+                  <div>
+                    <h1 className="text-2xl font-bold text-white">
+                      {profileData.fullname}
+                    </h1>
+                    <p className="text-gray-400">@{profileData.username}</p>
+                  </div>
+                </div>
+
+                {/* Botões de Ação */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowEditProfile(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                    Editar Perfil
+                  </button>
+                  <button className="p-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200">
+                    <Settings className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-3">
+                <p className="text-gray-300">{profileData.bio}</p>
+
+                <div className="flex flex-wrap gap-4 text-sm text-gray-400">
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <span className="text-white font-semibold">
+                      {profileData.following.toLocaleString()}
+                    </span>
+                    <span className="text-gray-400">seguindo</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Users className="w-4 h-4 text-gray-400" />
+                    <span className="text-white font-semibold">
+                      {profileData.followers.toLocaleString()}
+                    </span>
+                    <span className="text-gray-400">seguidores</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>Ingressou em {profileData.joinDate}</span>
+                  </div>
+                </div>
+              </div>
             </div>
+
+            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden mb-6">
+              <div className="flex border-b border-gray-800">
+                <button
+                  onClick={() => setActiveTab("posts")}
+                  className={`flex-1 px-6 py-4 text-sm font-medium transition-colors duration-200 ${
+                    activeTab === "posts"
+                      ? "text-indigo-400 border-b-2 border-indigo-500 bg-gray-800/50"
+                      : "text-gray-400 hover:text-white hover:bg-gray-800/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <MessageSquare className="w-4 h-4" />
+                    Posts
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab("likes")}
+                  className={`flex-1 px-6 py-4 text-sm font-medium transition-colors duration-200 ${
+                    activeTab === "likes"
+                      ? "text-indigo-400 border-b-2 border-indigo-500 bg-gray-800/50"
+                      : "text-gray-400 hover:text-white hover:bg-gray-800/30"
+                  }`}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <Heart className="w-4 h-4" />
+                    Curtidas
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            {renderTabContent()}
           </div>
         </div>
       </div>
@@ -428,7 +556,6 @@ export function Home() {
         </div>
       )}
 
-      {/* Mobile Search Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-gray-900/90 backdrop-blur-sm border-t border-gray-800 p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />

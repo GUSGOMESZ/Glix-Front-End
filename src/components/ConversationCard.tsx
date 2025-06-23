@@ -1,4 +1,4 @@
-import { Eye, Heart, MessageCircle, MoreHorizontal } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal } from "lucide-react";
 
 interface ConversationCardData {
   id: number;
